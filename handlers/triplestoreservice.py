@@ -2,21 +2,23 @@
 Multi-purpose handler to manage the triple store's entities and references
 """
 
-from google.appengine.ext import ndb
-from datastore.models import WebResource, Indexer
+from datastore.models import WebResource
 
 from handlers.basehandler import ServiceHandler
-from config.config import _CLIENT_TOKEN, _SERVICE, _WEBRES_GRAPH_ID, _VOC_GRAPH_ID
-from flankers.graphtools import store_triples
+from config.config import _SERVICE, _VOC_GRAPH_ID
+from config.secret import _CLIENT_TOKEN
+from datastore.graphtools import store_triples
 
 __author__ = 'Lorenzo'
 
 
 class DataToTriplestore(ServiceHandler):
     """
+    POST: '/triplestore/<perform:[a-z]+>'
+
     Perform different actions of the triple store:
-    1. Dump: store from WebResource to triple store
-    2. Monitor: return statistics on the triple store
+        1. Dump: store from WebResource to triple store
+        2. Monitor: return statistics on the triple store
     """
 
     @classmethod
@@ -96,7 +98,6 @@ class DataToTriplestore(ServiceHandler):
                     print df, rl
                     triples += self.n_triplify(df)
                     triples += " ".join([self.n_triplify(r) for r in rl])
-                    print triples
                     # 3. store triples
                     _, cache_graph = store_triples(triples, _VOC_GRAPH_ID, format="n3")
                     print "GRAPH STORED OK: {} triples".format(len(cache_graph))

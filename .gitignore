@@ -70,6 +70,9 @@ appengine-generated/
 .idea/
 flankers/tagmeapi/secret/keys.py
 config/tw_secret.py
+config/fb_secret.py
+config/secret.py
+config/youtube_secret.py
 app.old# Created by .ignore support plugin (hsz.mobi)
 
 lib/

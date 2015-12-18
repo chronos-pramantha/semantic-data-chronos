@@ -3,7 +3,8 @@ import json
 from rdflib import Graph
 
 from scripts.remote.remote import get_curling, post_curling
-from config.config import _CLIENT_TOKEN, _ENV, _SERVICE, _WEBRES_GRAPH_ID, _CONCEPTS_GRAPH_ID
+from config.config import _ENV, _SERVICE, _WEBRES_GRAPH_ID, _CONCEPTS_GRAPH_ID
+from config.secret import _CLIENT_TOKEN
 
 
 __author__ = 'Lorenzo'

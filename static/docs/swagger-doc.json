@@ -1,15 +1,15 @@
 {
     "swagger": "2.0",
     "info": {
-        "title": "Articles API",
-        "description": "A REST service to access Chronos Semantic Data about Space Exploration",
+        "title": "Articles and Semantic API",
+        "description": "A REST service to access Chronos Semantic Data: a collection of scientific articles, blogposts, news, social media's content about Space Exploration",
         "version": "0.4.5"
     },
-    "host": "localhost:8080",
+    "host": "semantics.projectchronos.eu",
     "schemes": [
         "http"
     ],
-    "basePath": "/articles/v04",
+    "basePath": "/",
     "produces": [
         "application/json"
     ],
@@ -17,7 +17,7 @@
         "/": {
             "get": {
                 "summary": "Articles Base endpoint",
-                "description": "The Articles Base endpoint returns a JSON object with an __array of \nArticles Objects__ and a bookmark to paginate to the next batch of\nArticles. Every batch holds 25 Articles Objects.\nFull documentation at https://github.com/SpaceAppsXploration/rdfendpoints/wiki/Articles-API \n",
+                "description": "The Articles Base endpoint returns a JSON object with an __array of \nArticles Objects__ and a bookmark to paginate to the next batch of\nArticles. Every batch holds 25 Articles Objects.\n",
                 "parameters": [
                     {
                         "name": "bookmark",
@@ -35,26 +35,20 @@
                         "description": "An array of Articles Objects",
                         "schema": {
                             "type": "object",
-                            "articles": {
-                                "type": "array",
-                                "$ref": "#/definitions/ArticleObject"
-                            },
-                            "next": {
-                                "type": "string",
-                                "$ref": "#/definitions/BookmarkToken"
-                            }
+                            "$ref": "#/definitions/Articles"
                         }
                     },
                     "default": {
                         "description": "Unexpected error",
                         "schema": {
+                            "type": "object",
                             "$ref": "#/definitions/Error"
                         }
                     }
                 }
             }
         },
-        "/by": {
+        "/filterby": {
             "get": {
                 "summary": "Articles Filters endpoint",
                 "description": "Filter Articles collection __by type__ to return Article(s) of the same type; or __by keyword__ to return Article(s) indexed by that keyword.\n",
@@ -69,7 +63,7 @@
                     {
                         "name": "keyword",
                         "in": "query",
-                        "description": "a keyword in the index",
+                        "description": "a keyword from the Index Base. Full list of keywords at /indexer.",
                         "required": false,
                         "type": "string"
                     },
@@ -89,25 +83,20 @@
                         "description": "An array of Articles indexed by keyword",
                         "schema": {
                             "type": "object",
-                            "articles": {
-                                "type": "array",
-                                "$ref": "#/definitions/ArticleObject"
-                            },
-                            "keyword": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/FilterArticles"
                         }
                     },
                     "default": {
                         "description": "Unexpected error",
                         "schema": {
+                            "type": "object",
                             "$ref": "#/definitions/Error"
                         }
                     }
                 }
             }
         },
-        "/keywords/by": {
+        "/keywords/filterby": {
             "get": {
                 "summary": "Keywords endpoint",
                 "description": "Return Keywords related to a given Article Object \n",
@@ -128,17 +117,73 @@
                         "description": "An array of Keywords in the index referred to an Article",
                         "schema": {
                             "type": "object",
-                            "keywords": {
-                                "type": "array",
-                                "format": "string"
-                            },
-                            "url": "string",
-                            "uuid": "integer"
+                            "$ref": "#/definitions/FilterKeywords"
                         }
                     },
                     "default": {
                         "description": "Unexpected error",
                         "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/indexer": {
+            "get": {
+                "summary": "Index's Keywords endpoint",
+                "description": "Returns information about the indexed Keywords",
+                "parameters": [ ],
+                "tags": [
+                    "Index Base"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "An array of Articles Objects",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/Indexer"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/indexer/filterby": {
+            "get": {
+                "summary": "Index Filter Endpoint",
+                "description": "Filter the index using different parameters",
+                "parameters": [
+                    {
+                        "name": "term",
+                        "in": "query",
+                        "description": "a string (label) defining a keyword. Full list of keywords in Index Base.",
+                        "required": false,
+                        "type": "string"
+                    }
+                ],
+                "tags": [
+                    "Filter Index"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "A object defining genealogy (ancestors) of a keyword in the the Taxonomy",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/FilterKeywords"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "type": "object",
                             "$ref": "#/definitions/Error"
                         }
                     }

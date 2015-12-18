@@ -1,7 +1,7 @@
-__author__ = 'lorenzo'
-
 import unittest
-from flankers.Scrawler import Scrawler
+from flankers.scrawler import Scrawler
+
+__author__ = 'lorenzo'
 
 
 class CrawlerTest(unittest.TestCase):
@@ -41,14 +41,41 @@ class CrawlerTest(unittest.TestCase):
         """
         s = Scrawler()
         items = s.load_links()
-        print items
-        for i in xrange(0, 5):
+        print items[0]
+        for i in xrange(0, 1):
             try:
                 item = s.read_feed(items[i])
             except ValueError:
                 continue
+            print item  # this is a list of feeds
             item = self.mock_Item(str(item['title']), str(item['link']), str(item['published_parsed']), str(item['summary'].encode('utf-8')))
             for k, v in item.store().items():
                 print k+': ', v
 
             print "\n"
+
+    def test_feedparser(self):
+        import feedparser
+        d = feedparser.parse('http://photojournal.jpl.nasa.gov/rss/new')
+        print d
+
+    def test_catch_summary(self):
+        value = '''<table><tr>
+<td><ahref="http://photojournal.jpl.nasa.gov/catalog/PIA19775"><imgalt=""border="0"height="100"src="http://photojournal.jpl.nasa.gov/thumb/PIA19775.jpg"style="vertical-align: middle;"width="122"/></a>\n\t\t\t\t\n\t\t\t\t</td>
+\n\t\t\t\t<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\n\t\t\t\t\t\t</td>
+\n\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t\tTarget: &nbsp;<ahref="http://solarsystem.nasa.gov/planets/profile.cfm?Object=Earth">Earth</a>\n\t\t\t\t\t\t\n\t\t\t\t\t\t\n\t\t\t\t\t\t\n\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t\t<br/>Mission: &nbsp;\n\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t\t<ahref="http://terra.nasa.gov">Terra</a>\n\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\n\t\t\t\t\t\t\n\n\t\t\t\t\t\t<br/>
+Instrument: &nbsp;\t\t\t\n\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t\t<ahref="http://asterweb.jpl.nasa.gov/">ASTER</a>\n\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t<br/>\n\t\t\t\t\t\n\t\t\t\t\tImageCredit: NASA/GSFC/METI/ERSDAC/JAROS,
+                andU.S./JapanASTERScienceTeam\n\t\t\t\t\t</td>
+</tr></table>\n\t\t\t\t\t<br/>'''
+        from bs4 import BeautifulSoup
+        import re
+
+        body = BeautifulSoup(value, "lxml").body
+
+        outlines1 = body.find(text=re.compile('.Target:'))
+
+        print outlines1
+
+
+
+    # look for media types: https://aerospaceblog.wordpress.com/feed/

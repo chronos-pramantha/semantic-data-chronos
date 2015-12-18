@@ -10,20 +10,28 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
+- kind: Indexer
+  properties:
+  - name: keyword
+  - name: stored
+
 - kind: WebResource
   properties:
   - name: title
   - name: stored
+    direction: desc
 
 - kind: WebResource
   properties:
   - name: type_of
   - name: published
+    direction: desc
 
 - kind: WebResource
   properties:
   - name: type_of
   - name: stored
+    direction: desc
 
 - kind: WebResource
   properties:
@@ -34,6 +42,7 @@ indexes:
   properties:
   - name: url
   - name: stored
+    direction: desc
 
 - kind: WebResource
   properties:

@@ -1,31 +1,11 @@
 """
-Tools for remote interaction with the server/datastore
+Tools for remote interaction with the servers
 """
 
 __author__ = 'lorenzo'
 
 import sys
 sys.path.insert(0, '../..')
-from config.config import _CLIENT_TOKEN
-
-
-def dump_to_ds_post(url, data):
-    """
-    NOTE: better to use PYcURL for this operations, avoid a lot of encoding and conflicts
-    :param url: the server url
-    :param data: the triples
-    :return: urllib response
-    """
-    import urllib
-    import logging
-
-    logging.getLogger().setLevel(logging.DEBUG)
-    params = urllib.urlencode({'token': _CLIENT_TOKEN, 'triple': data})
-    f = urllib.urlopen(url, params)
-    logging.info(f.getcode())
-    if f.getcode() == 200:
-        return f.read()
-    raise Exception("dump_to_ds_post(): HTTP Error " + str(f.getcode()) + " " + str(f.read()))
 
 
 def post_curling(url, params, file=None, display=False):
@@ -33,7 +13,7 @@ def post_curling(url, params, file=None, display=False):
     POST to a remote url and print the response in a file or on screen or return the body of the response
     :param url: target url
     :param params: parameters in the request
-    :param file: name of the output file
+    :param file: path and name of the output file
     :param display: true if you want to print output on console/command line
     :return: file > None, body of the response
     """
@@ -62,6 +42,7 @@ def post_curling(url, params, file=None, display=False):
         c.close()
         return None
     if display:
+        # if display flag is on, print in the server debug stream
         storage = StringIO()
         c.setopt(c.WRITEFUNCTION, storage.write)
         c.perform()
@@ -77,7 +58,10 @@ def post_curling(url, params, file=None, display=False):
     return storage.getvalue()
 
 
-def get_curling(url, params=dict()):
+def get_curling(url, params=None, display=False):
+    if params is None:
+        params = dict()
+
     import pycurl
     import urllib
     from StringIO import StringIO
@@ -91,6 +75,15 @@ def get_curling(url, params=dict()):
     else:
         c.setopt(c.URL, url)
 
+    if display:
+        # if display flag is on, print in the server debug stream
+        storage = StringIO()
+        c.setopt(c.WRITEFUNCTION, storage.write)
+        c.perform()
+        c.close()
+        print storage.getvalue()
+        return storage.getvalue()
+
     print "pyCURLing url:" + str(c.getinfo(pycurl.EFFECTIVE_URL))
     # For older PycURL versions:
     #c.setopt(c.WRITEFUNCTION, buffer.write)
@@ -103,7 +96,10 @@ def get_curling(url, params=dict()):
     return body
 
 
-def google_urlfetch(url, params=dict()):
+def google_urlfetch(url, params=None):
+    if params is None:
+        params = dict()
+
     import urllib
 
     from google.appengine.api import urlfetch

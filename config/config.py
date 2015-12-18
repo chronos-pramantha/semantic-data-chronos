@@ -20,12 +20,10 @@ _VOCS = {
 }
 
 
-_CLIENT_TOKEN = "******"
-
 _ENV = {'offline': {'_SERVICE': 'http://localhost:8080',
                     '_DEBUG': True},
-        'online': {'_SERVICE': 'http://hypermedia.projectchronos.eu',
-                   '_DEBUG': True}}
+        'online': {'_SERVICE': 'http://semantics.projectchronos.eu',
+                   '_DEBUG': False}}
 
 
 def set_env_variables():
@@ -51,24 +49,25 @@ def articles_api_version(ver, endpoint='ALL'):
 _ARTICLES_API = {
     "ALL": {
         "03": _SERVICE + "/articles/?api=true&",
-        "04": _SERVICE + "/articles/v04/"
+        "04": _SERVICE + "/"
     },
     "TYPE_OF": {
-        "04": _SERVICE + "/articles/v04/article"
+        "04": _SERVICE + "/"
     }
 }
 
 _CRAWLING_POST = {'local': 'http://localhost:8080/database/crawling/store',
-                  'remote': 'http://hypermedia.projectchronos.eu/database/crawling/store'}
+                  'remote': 'http://semantics.projectchronos.eu/database/crawling/store'}
 
 _PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'templates')
 
 _XPREADER_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'xpreader-client')
 
-# Given slug for different query types
+# Given slugs in the memcache for different query types
 _MEMCACHE_SLUGS = {
     'ALL': 'WebResource_all',
     'TYPE_OF': 'Articles_type_of',
     'KEYWORDS': 'Keywords_for_',
-    'KWD_BY_ARTICLE': 'Keywords_'
+    'KWD_BY_ARTICLE': 'Keywords_',
+    'INDEXER_DISTINCT': 'Indexer_distinct_'
 }

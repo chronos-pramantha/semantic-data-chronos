@@ -1,5 +1,5 @@
 application: chronostriples
-version: 0-1
+version: 0-2
 runtime: python27
 api_version: 1
 threadsafe: no
@@ -11,14 +11,19 @@ handlers:
 
 - url: /(.*\.(html|js|css|json|png|woff|woff2|ttf))$
   static_files: static/docs/\1
-  upload: static/.*\.(html|js|css)$
+  upload: static/.*\.(html|js|css|json|png|woff|woff2|ttf)$
 
 - url: /docs
   static_files: static/docs/index.html
   upload: static/index.html
+  mime_type: text/html
 
 - url: /cron/startcrawling
   script: flankers.scrawler.application
+  login: admin
+
+- url: /cron/hrawling
+  script: flankers.hrawler.application
   login: admin
 
 - url: /cron/indexing

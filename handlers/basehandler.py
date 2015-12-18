@@ -15,22 +15,20 @@ from datastore.models import WebResource, Indexer
 from flankers.textsemantics import TextSemantics
 
 
-class JSONBaseHandler(webapp2.RequestHandler):
+class BaseHandler(webapp2.RequestHandler):
+    """def handle_exception(self, exception, debug):
+        import os
+        from google.appengine.ext.webapp import template
+        # If the exception is a HTTPException, use its error code.
+        # Otherwise use a generic 500 error code.
+        if isinstance(exception, webapp2.HTTPException):
+            self.response.set_status(exception.code)
+        else:
+            self.response.set_status(500)
+
+        path = os.path.join(_PATH, 'over_quota.html')
+        return self.response.out.write(template.render(path, {}))
     """
-    Handler For JSON Endpoints.
-
-    Extends RequestHandler with new custom methods for:
-    - Error Handling
-    - Handling different queries with the same handler
-    - Implement memcache for the operations in the handler
-    """
-
-    def __init__(self, *args, **kwargs):
-        super(JSONBaseHandler, self).__init__(*args, **kwargs)
-        self._query = self.memcache_webresource_query()  # holds the query needed to serve the data
-        self._query_type = None  # type of the query: ALL=global TYPE_OF=filtered by type ...
-        self._API_VERSION = '04'
-
     def json_error_handler(self, code, exception=None):
         """
         Print out error in JSON as a readable dictionary.
@@ -46,6 +44,23 @@ class JSONBaseHandler(webapp2.RequestHandler):
             {"error": 1, "status": code, "exception": exception}
         )
 
+
+class JSONBaseHandler(BaseHandler):
+    """
+    Handler For JSON Endpoints.
+
+    Extends RequestHandler with new custom methods for:
+    - Error Handling
+    - Handling different queries with the same handler
+    - Implement memcache for the operations in the handler
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(JSONBaseHandler, self).__init__(*args, **kwargs)
+        self._query = self.memcache_webresource_query()  # holds the query needed to serve the data
+        self._query_type = None  # type of the query: ALL=global TYPE_OF=filtered by type ...
+        self._API_VERSION = '04'
+
     def memcache_webresource_query(self):
         """
         Get or Set in the memcache the full query of WebResources.
@@ -53,6 +68,11 @@ class JSONBaseHandler(webapp2.RequestHandler):
         It's used by all the endpoints to fetch all the data.
         Updates every six hours (18000 secs)
         :return: Query object or None
+
+        #TO-DO: implement as
+                      @property
+                      def _query(self)_
+                          ...
         """
         mkey = _MEMCACHE_SLUGS['ALL']
         if not memcache.get(key=mkey):
@@ -163,23 +183,6 @@ class JSONBaseHandler(webapp2.RequestHandler):
         :param bookmark: a cursor's bookamrk or None
         """
         pass
-
-
-class BaseHandler(webapp2.RequestHandler):
-    """def handle_exception(self, exception, debug):
-        import os
-        from google.appengine.ext.webapp import template
-        # If the exception is a HTTPException, use its error code.
-        # Otherwise use a generic 500 error code.
-        if isinstance(exception, webapp2.HTTPException):
-            self.response.set_status(exception.code)
-        else:
-            self.response.set_status(500)
-
-        path = os.path.join(_PATH, 'over_quota.html')
-        return self.response.out.write(template.render(path, {}))
-    """
-    pass
 
 
 class ServiceHandler(webapp2.RequestHandler):

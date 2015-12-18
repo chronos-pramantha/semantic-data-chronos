@@ -2,8 +2,6 @@ __author__ = 'lorenzo'
 
 
 import unittest
-from urllib import urlencode
-
 
 subj, pred, obj = '?s', '?p', '?o'
 
@@ -40,7 +38,7 @@ class SPARQLquery(unittest.TestCase):
     """
 
     def test_basic_sparql(self):
-        from flankers.graphtools import query
+        from datastore.graphtools import query
         try:
             for t in fulltest:
                 print t + "\n" + query(t)

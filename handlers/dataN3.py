@@ -1,13 +1,11 @@
 from urlparse import urlparse
 import json
 import logging
-
-import webapp2
 from google.appengine.ext import ndb
 
-from scripts.remote.remote import dump_to_ds_post
-
 __author__ = 'Lorenzo'
+
+from handlers.basehandler import BaseHandler
 
 webresource_prop_map = {
     'url': {
@@ -29,179 +27,103 @@ webresource_prop_map = {
 }
 
 
-class PublishWebResources(webapp2.RequestHandler):
+class PublishWebResources(BaseHandler):
     """
     GET data/webresource/<key>
-    Serve datastore model WebResource as a NTRIPLES, for the purpose of the cloud:
+    Serve datastore model WebResource as a NTRIPLES, for the purpose of the cloud.
+    The data is served to graph.projectchronos.eu
 
     Linked Data to be served (JSON-LD format):
         {
-          "@id": "http://hypermedia.projectchronos.eu/data/webresource/<key>",
+          "@id": "http://graph.projectchronos.eu/data/webresource/<key>",
           "@type": [
               "http://ontology.projectchronos.eu/chronos/webresource",
               "https://schema.org/Article"
           ]
         }
 
-    :return Ntriple string
+    :return JSON-LD
+    #todo: make it return N-Triples
     """
     def get(self, key):
         from datastore.models import WebResource
 
         try:
-            # if 'key' is an ndb.Key
+            # try if `key` is an ndb.Key
             key = ndb.Key(urlsafe=key)
             obj = key.get()
         except Exception:
-            # if 'key' is an id()
+            # if `key` is an id()
             key = ndb.Key(WebResource, int(key))
             obj = key.get()
         except:
-            # wrong 'key'
-            raise TypeError('Wrong Format of NDB key')
+            # wrong `key` or `id`
+            obj = None
 
-        url = str(obj.url)
-        author = urlparse(url).netloc
-        if url.find('twitter.com') != -1 and len(str(obj.abstract)) != 0:
-            # obj is a tweet
-            schema_type = 'https://schema.org/SocialMediaPosting'
-        elif url.find('twitter.com') != -1 and len(str(obj.abstract)) == 0:
-            # obj is link or media
-            schema_type = 'https://schema.org/MediaObject'
-        else:
-            # obj is an article
-            schema_type = 'https://schema.org/Article'
-
-        result = {
-            "@id": "http://hypermedia.projectchronos.eu/data/webresource/" + key.urlsafe(),
-            "@type": schema_type,
-            "https://schema.org/author": {
-                '@value': author,
-                '@type': 'https://schema.org/Text'
-            }
-        }
-        for k, v in webresource_prop_map.items():
-            result[v['prop']] = {
-                '@value': obj.dump_to_json()[k],
-                '@type': v['type']
-            }
-
-        #
-        # Custom translation to ntriples (to be better designed)
-        #
-        results = str()
-        for k in result.keys():
-            if k != '@id':
-                results += '<' + result['@id'] + '>' # add subject
-                if isinstance(result[k], str):
-                    results += '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>' # predicate
-                    results += '<' + result[k] + '> . ' # add object
-                else:
-                    if result[k]['@value']:
-                        results += '<' + k + '>' # add predicate
-                        results += '<' + result[k]['@value'] + '> . ' # add object'''
-
-        self.response.headers['Access-Control-Allow-Origin'] = '*'
-        self.response.headers['Content-Type'] = "application/n-triples; charset=utf-8"
-        return self.response.out.write(
-            results
-        )
-
-
-class PublishConcepts(webapp2.RequestHandler):
-    """
-    Serve taxonomy entity as a NTRIPLES, for the purpose of the cloud:
-
-        Fetch from taxonomy:
-            {
-                "label": "infrared telescopes",
-                "url": "http://taxonomy.projectchronos.eu/concepts/c/infrared+telescopes#concept",
-                "group": "keywords",
-                "ancestor": "http://taxonomy.projectchronos.eu/concepts/c/astronomy#concept"
-            }
-
-        Linked Data shape of the data:
-            {
-                "http://www.w3.org/1999/02/22-rdf-syntax-ns#label": "infrared telescopes",
-                "@type": "http://ontology.projectchronos.eu/chronos/concept"
-                "@id": "http://hypermedia.projectchronos.eu/data/concept/infrared+telescopes",
-                "http://ontology.projectchronos.eu/chronos/group": {
-                    "@id": "http://ontology.projectchronos.eu/chronos/keyword"
-                }
-                "http://ontology.projectchronos.eu/chronos/relAncestor": {
-                    "@id": "http://taxonomy.projectchronos.eu/concepts/c/astronomy#concept"
-                }
-            }
-    :param label: it's a slugified version of the concept label (i.e. 'infrared+telescopes')
-    :return Ntriple string
-    """
-    def get(self, label):
-        from google.appengine.api import urlfetch
-
-        base_url = 'http://taxonomy.projectchronos.eu/concepts/c/'
-        url = base_url + label
-
-        response = urlfetch.fetch(url, deadline=300)
-
-        content = response.content
-        status = response.status_code
-
-        if status == 200:
-            results = str()
-            result = json.loads(content)
-            if result['group'] == 'keywords':
-                # add type
-                _id = str('<http://hypermedia.projectchronos.eu/data/concept/' + label + '>')
-                results += _id  # add subject
-                results += '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'  # predicate
-                results += '<http://ontology.projectchronos.eu/chronos/concept> .'  # add object
-                for k in result.keys():
-                    results += '<http://hypermedia.projectchronos.eu/data/concept/' + label + '>' # add subject
-                    if k == 'label':
-                        results += '<http://www.w3.org/1999/02/22-rdf-syntax-ns#label>' # predicate
-                        results += '<' + result['label'] + '> . ' # add object
-                    elif k == 'ancestor':
-                        results += '<http://ontology.projectchronos.eu/chronos/relAncestor>' # predicate
-                        results += '<' + result['ancestor'] + '> . ' # add object
-                    elif k == 'group':
-                        results += '<http://ontology.projectchronos.eu/chronos/group>' # predicate
-                        results += '<http://ontology.projectchronos.eu/chronos/keyword> . ' # add object'''
-
-                self.response.headers['Access-Control-Allow-Origin'] = '*'
-                self.response.headers['Content-Type'] = "application/n-triples; charset=utf-8"
-                return self.response.write(results)
+        if obj:
+            url = str(obj.url)
+            author = urlparse(url).netloc
+            if obj.type_of == 'tweet' or obj.type_of == 'fb':
+                # obj is a tweet
+                schema_type = 'https://schema.org/SocialMediaPosting'
+            elif obj.type_of == 'media' or obj.type_of == 'movie':
+                # obj is link or media
+                schema_type = 'https://schema.org/MediaObject'
             else:
-                e = str(Exception("Label is in the taxonomy but it's not a keyword"))
-                return self.response.write(e)
+                # obj is an article
+                schema_type = 'https://schema.org/Article'
 
+            result = {
+                "@id": "http://graph.projectchronos.eu/data/webresource/" + key.urlsafe(),
+                "@type": schema_type,
+                "https://schema.org/author": {
+                    '@value': author,
+                    '@type': 'https://schema.org/Text'
+                },
+                "uuid": obj.key.id()
+            }
+            for k, v in webresource_prop_map.items():
+                result[v['prop']] = {
+                    '@value': obj.dump_to_json()[k],
+                    '@type': v['type']
+                }
+
+            self.response.headers['Access-Control-Allow-Origin'] = '*'
+            self.response.headers['Content-Type'] = "application/json"
+            return self.response.out.write(
+                json.dumps(
+                    result,
+                    indent=2
+                )
+            )
+
+            #
+            # Custom translation to ntriples (to be better designed)
+            #
+            results = str()
+            for k in result.keys():
+                if k != '@id':
+                    results += '<' + result['@id'] + '>' # add subject
+                    if isinstance(result[k], str):
+                        results += '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>' # predicate
+                        results += '<' + result[k] + '> . ' # add object
+                    else:
+                        if result[k]['@value']:
+                            results += '<' + k + '>' # add predicate
+                            results += '<' + result[k]['@value'] + '> . ' # add object'''
+
+            self.response.headers['Access-Control-Allow-Origin'] = '*'
+            self.response.headers['Content-Type'] = "application/n-triples; charset=utf-8"
+            return self.response.out.write(
+                results
+            )
         else:
-            e = str(Exception("Wrong Label or Server Not Reachable"))
-            return self.response.write(e)
+            self.response.headers['Access-Control-Allow-Origin'] = '*'
+            self.response.headers['Content-Type'] = "application/json"
+            return self.response.out.write(
+                self.json_error_handler(404, exception='Wrong Format of NDB key or wrong resource ID')
+            )
 
-
-class PublishSpaceDocs(webapp2.RequestHandler):
-    """
-    Publish in NTriples format from taxonomy.projectchronos.eu/space/dbpediadocs
-    #TO-DO: serialize to Ntriples
-    """
-    def get(self, term):
-        self.response.headers['Access-Control-Allow-Origin'] = '*'
-        self.response.headers['Content-Type'] = "application/json"
-        from google.appengine.api import urlfetch
-
-        base_url = 'http://taxonomy.projectchronos.eu/space/dbpediadocs/'
-        url = base_url + term
-
-        response = urlfetch.fetch(url, deadline=300)
-
-        content = response.content
-        status = response.status_code
-
-        if status == 200:
-            return self.response.write(content)
-        else:
-            e = str(Exception("Wrong Label or Server Not Reachable"))
-            return self.response.write(e)
 
 
 

@@ -4,7 +4,7 @@ import json
 from google.appengine.ext import ndb
 from google.net.proto.ProtocolBuffer import ProtocolBufferDecodeError
 
-from config.config import _CLIENT_TOKEN
+from config.secret import _CLIENT_TOKEN
 
 from datastore.models import WebResource, Indexer
 
@@ -33,7 +33,42 @@ class DataStoreOperationsAPI(JSONBaseHandler):
         self.response.headers['Content-Type'] = 'application/json'
 
         if self.request.get('token') == _CLIENT_TOKEN:
-            if (name == 'webresource' or name == 'indexer') and self.request.get('retrieve'):
+            if name == 'correctentries' and self.request.get('skip'):
+                from articlesjsonapi import memcache_webresource_query
+                from datastore.models import WebResource
+                from google.appengine.api import memcache
+
+                query = memcache.get(key="WebResource_all")
+
+                # use cursor!
+                for q in query.fetch(500, offset=int(self.request.get('skip'))):
+                    try:
+                        q.in_graph
+                    except AttributeError:
+                        setattr(q, 'in_graph', False)
+
+                        try:
+                            int(q.title)
+                            if 'facebook.com' in q.url:
+                                setattr(q, 'type_of', 'fb')
+                            elif 'twitter.com' in q.url:
+                                setattr(q, 'type_of', 'tweet')
+                        except:
+                            if 'arxiv.org' in q.url:
+                                setattr(q, 'type_of', 'paper')
+                            elif q.title == '' and q.abstract == '':
+                                if q.url.endswith(('jpg', 'jpeg', 'png', 'mp3', 'mp4', 'm4v')):
+                                    setattr(q, 'type_of', 'media')
+                                elif q.url.endswith('pdf'):
+                                    setattr(q, 'type_of', 'pdf')
+                                else:
+                                    setattr(q, 'type_of', 'link')
+                            else:
+                                setattr(q, 'type_of', 'feed')
+
+                        q.put()
+                        print q.to_dict()
+            elif (name == 'webresource' or name == 'indexer') and self.request.get('retrieve'):
                 # respond with a single resource of the requested kind
                 resource = self.retrieve_a_single_resource(self.request.get('retrieve'), kind=name)
                 print type(resource)
@@ -80,11 +115,12 @@ class DataStoreOperationsAPI(JSONBaseHandler):
                 resource = self.retrieve_a_single_resource(self.request.get('retrieve'))
                 concepts = Indexer.query().filter(Indexer.webres == resource.key)
 
-                listed = {'concepts': [
-                    concept.keyword.replace(" ", "+")
-                    for concept in concepts
-                ],
-                'resource_id': resource.key.id()
+                listed = {
+                    'concepts': [
+                        concept.keyword.replace(" ", "+")
+                        for concept in concepts
+                    ],
+                    'resource_id': resource.key.id()
                 }
 
                 return self.response.write(

@@ -1,5 +1,5 @@
 # Project Chronos
-## rdfendpoints
+## semantic-data-chronos
 
 This repository is part of the __Chronos' Cloud__:
 <table>

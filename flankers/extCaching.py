@@ -1,13 +1,11 @@
-import webapp2
 import json
 import logging
 
-from google.appengine.ext.webapp import template
+import webapp2
 
-from flankers.graphtools import query
+from datastore.graphtools import query
 from config.config import _DEBUG
 from datastore.models import N3Cache
-
 
 __author__ = 'Lorenzo'
 

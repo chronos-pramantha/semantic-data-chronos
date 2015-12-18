@@ -29,6 +29,10 @@ class YoutubeStore(webapp2.RequestHandler):
     """
     def get(self):
         def build_client():
+            """
+            Build a Youtube Data API client using apiclient
+            :return: a client object
+            """
             youtube = build(
                 YOUTUBE_API_SERVICE_NAME,
                 YOUTUBE_API_VERSION,
@@ -36,26 +40,42 @@ class YoutubeStore(webapp2.RequestHandler):
             )
             return youtube
 
-        def fetch_data(client):
+        def fetch_data(client, q):
+            """
+            Create and execute request to service
+            :param client: a client object
+            :param q: a query string
+            :return: dict() with response
+            """
             data = client.search().list(
-                q=params['q'],
+                q=q,
                 part=params['part'],
-                maxResults=50,
-                publishedAfter='2005-01-01T00:00:00Z'
+                maxResults=10,
+                publishedAfter='2015-10-10T00:00:00Z'
             ).execute()
 
             return data
 
         def store_video(obj):
+            """
+            Store video in the model
+            :param obj: dict() of a video object
+            :return: None
+            """
             WebResource.store_youtube_video(obj)
 
         def store_response(resp):
+            """
+            Loop the items in the response
+            :param resp: the response dict()
+            :return: None
+            """
             print isinstance(resp['items'], list)
             for video in resp['items']:
                 store_video(video)
 
         client = build_client()
-        response = fetch_data(client)
+        response = fetch_data(client, params['q'])
         #print response
         store_response(response)
 

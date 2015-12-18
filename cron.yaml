@@ -1,10 +1,10 @@
 cron:
 - description: scrawler
   url: /cron/startcrawling
-  schedule: every 5 minutes
+  schedule: every 10 minutes
 - description: indexing
   url: /cron/indexing
-  schedule: every 1 minutes
+  schedule: every 3 minutes
 - description: storetweets
   url: /cron/storetweets
   schedule: every 180 minutes

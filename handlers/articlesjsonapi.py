@@ -20,7 +20,7 @@ class ArticlesJSONv1(JSONBaseHandler):
     def __init__(self, *args, **kwargs):
         super(ArticlesJSONv1, self).__init__(*args, **kwargs)
         self._VERSION = 'v04'
-        self._BASEPATH = '/articles/' + self._VERSION + '/'
+        self._BASEPATH = '/'
 
     def get(self, obj=None):
         """
@@ -50,7 +50,7 @@ class ArticlesJSONv1(JSONBaseHandler):
                     indent=2
                 )
             )
-        elif self.request.path == self._BASEPATH + 'by':
+        elif self.request.path == self._BASEPATH + 'filterby':
             if self.request.get('type'):
                 # serve Articles by type
                 if self.request.get('type') in tuple(WebResource.type_of._choices):
@@ -86,7 +86,7 @@ class ArticlesJSONv1(JSONBaseHandler):
                 return self.response.out.write(
                     self.json_error_handler(404, 'need to define a ?type or a ?keyword')
                 )
-        elif self.request.path == self._BASEPATH + 'keywords/by':
+        elif self.request.path == self._BASEPATH + 'keywords/filterby':
             if self.request.get('url'):
                 # serve keywords for a given article's url
                 response = self.memcache_keywords(self.request.get('url'))
@@ -109,12 +109,12 @@ class ArticlesJSONv1(JSONBaseHandler):
                 results = self.memcache_indexer_keywords_distinct()
             except ValueError as e:
                 return self.response.out.write(
-                    self.json_error_handler(404, 'wrong term')
+                    self.json_error_handler(404, 'cannot find hierarchy for this term')
                 )
             return self.response.out.write(
                 json.dumps(results)
             )
-        elif self.request.path == self._BASEPATH + 'indexer/by':
+        elif self.request.path == self._BASEPATH + 'indexer/filterby':
             if self.request.get('term'):
                 # find the genealogy of a term in the Taxonomy
                 try:
@@ -134,7 +134,7 @@ class ArticlesJSONv1(JSONBaseHandler):
                 return self.response.out.write(
                     self.json_error_handler(404, 'need to define a ?term, ?subject or ?division')
                 )
-        elif self.request.path == self._BASEPATH + 'resources/by':
+        elif self.request.path == self._BASEPATH + 'resources/filterby':
             if self.request.get('type'):
                 # serve keywords for a given type: wikislugs, missions, events ...
                 pass
@@ -214,7 +214,7 @@ class ArticlesJSONv1(JSONBaseHandler):
         if self._query_type == 'ALL':
             url = articles_api_version(self._API_VERSION) + '?bookmark='
         elif self._query_type == 'TYPE_OF':
-            url = articles_api_version(self._API_VERSION) + 'by?type=' +\
+            url = articles_api_version(self._API_VERSION) + 'filterby?type=' +\
                 self.request.get('type') + '&bookmark='
         else:
             raise ValueError('JSONBaseHandler.build_response(): self._query_type value error')

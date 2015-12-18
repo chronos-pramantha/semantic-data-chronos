@@ -4,10 +4,10 @@ BeautifulSoup4==4.4.0
 six
 pyparsing
 ordereddict
-tweepy
 isodate
 html5lib
-google-api-python-client
+twitter
+# rdflib-jsonld
 # oauth2: not implemented yet
 
 

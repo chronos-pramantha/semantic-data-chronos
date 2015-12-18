@@ -1,7 +1,7 @@
 import unittest
 import json
-from scripts.remote.remote import get_curling, post_curling
-from flankers.graphtools import query
+
+from scripts.remote.remote import get_curling
 
 __author__ = 'Lorenzo'
 
